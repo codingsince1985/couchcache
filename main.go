@@ -1,30 +1,30 @@
 package main
 
 import (
-	"github.com/couchbase/go-couchbase"
 	"github.com/gorilla/mux"
 	"net/http"
 )
 
-var c couchbase.Client
-var p couchbase.Pool
-var b *couchbase.Bucket
-
-const bucket = "default"
+var p *pool
 
 func main() {
-	c, _ = couchbase.Connect("http://Administrator:password@localhost:8091/")
-	p, _ = c.GetPool("default")
-	b, _ = p.GetBucketWithAuth(bucket, bucket, "")
+	p = newPool("http://Administrator:password@localhost:8091/")
 
 	r := mux.NewRouter()
-	r.HandleFunc("/id/{key}", handler)
+	r.HandleFunc("/{bucket}/{key}", handler)
 
 	http.ListenAndServe(":8080", r)
 }
 
 func handler(rw http.ResponseWriter, r *http.Request) {
-	key := mux.Vars(r)["key"]
-	v, _ := b.GetRaw(key)
-	rw.Write(v)
+	maps := mux.Vars(r)
+	bucket := maps["bucket"]
+	b, err := p.getBucket(bucket)
+	if err != nil {
+		rw.Write([]byte(""))
+	} else {
+		key := maps["key"]
+		v, _ := b.GetRaw(key)
+		rw.Write(v)
+	}
 }
