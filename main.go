@@ -5,26 +5,20 @@ import (
 	"net/http"
 )
 
-var p *pool
+var ds datastore
 
 func main() {
-	p = newPool("http://Administrator:password@localhost:8091/")
+	ds = newDatastore("http://Administrator:password@localhost:8091/", "default")
 
 	r := mux.NewRouter()
-	r.HandleFunc("/{bucket}/{key}", handler)
+	r.HandleFunc("/{key}", handler)
 
 	http.ListenAndServe(":8080", r)
 }
 
 func handler(rw http.ResponseWriter, r *http.Request) {
 	maps := mux.Vars(r)
-	bucket := maps["bucket"]
-	b, err := p.getBucket(bucket)
-	if err != nil {
-		rw.Write([]byte(""))
-	} else {
-		key := maps["key"]
-		v, _ := b.GetRaw(key)
-		rw.Write(v)
-	}
+	key := maps["key"]
+	v := ds.get(key)
+	rw.Write(v)
 }
