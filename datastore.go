@@ -6,14 +6,39 @@ import (
 
 type datastore couchbase.Bucket
 
-func newDatastore(url, bucket string) datastore {
-	c, _ := couchbase.Connect(url)
-	p, _ := c.GetPool("default")
-	b, _ := p.GetBucketWithAuth(bucket, bucket, "")
-	return datastore(*b)
+func newDatastore(url, bucket string) (ds datastore, err error) {
+	c, err := couchbase.Connect(url)
+	if err != nil {
+		return ds, err
+	}
+
+	p, err := c.GetPool("default")
+	if err != nil {
+		return ds, err
+	}
+
+	b, err := p.GetBucketWithAuth(bucket, bucket, "")
+	if err != nil {
+		return ds, err
+	}
+
+	return datastore(*b), nil
 }
 
-func (ds *datastore) get(key string) []byte {
-	v, _ := (*couchbase.Bucket)(ds).GetRaw(key)
+func (ds *datastore) get(k string) []byte {
+	v, err := (*couchbase.Bucket)(ds).GetRaw(k)
+	if err != nil {
+		return nil
+	}
+
 	return []byte(v)
+}
+
+func (ds *datastore) set(k string, v []byte) error {
+	err := (*couchbase.Bucket)(ds).SetRaw(k, 0, v)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
