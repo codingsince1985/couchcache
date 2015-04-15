@@ -8,37 +8,38 @@ import (
 )
 
 var ds datastore
-var err error
 
 func main() {
-	ds, err = newDatastore("http://Administrator:password@localhost:8091/", "default")
-	if err != nil {
+	if d, err := newDatastore("http://Administrator:password@localhost:8091/", "default"); err != nil {
 		log.Fatalln(err)
+	} else {
+		ds = d
 	}
 
 	r := mux.NewRouter()
-	kr := r.PathPrefix("/{key}").Subrouter()
+	kr := r.PathPrefix("/key/{key}").Subrouter()
 	kr.Methods("GET").HandlerFunc(getHandler)
 	kr.Methods("POST").HandlerFunc(postHandler)
 
 	http.ListenAndServe(":8080", r)
 }
 
-func getHandler(rw http.ResponseWriter, r *http.Request) {
-	maps := mux.Vars(r)
-	key := maps["key"]
-	if value := ds.get(key); value != nil {
-		rw.Write(value)
+func getHandler(w http.ResponseWriter, r *http.Request) {
+	k := mux.Vars(r)["key"]
+	if v := ds.get(k); v != nil {
+		w.Write(v)
+	} else {
+		http.Error(w, k+" not found", http.StatusNotFound)
 	}
 }
 
-func postHandler(rw http.ResponseWriter, r *http.Request) {
-	value, err := ioutil.ReadAll(r.Body)
+func postHandler(w http.ResponseWriter, r *http.Request) {
+	v, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	maps := mux.Vars(r)
-	key := maps["key"]
-	ds.set(key, value)
+	k := mux.Vars(r)["key"]
+	ds.set(k, v)
+	w.WriteHeader(http.StatusCreated)
 }
