@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 var ds datastore
@@ -34,12 +35,17 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postHandler(w http.ResponseWriter, r *http.Request) {
+	ttl, err := strconv.Atoi(r.FormValue("ttl"))
+	if err != nil {
+		ttl = 0
+	}
+
 	v, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
 	k := mux.Vars(r)["key"]
-	ds.set(k, v)
+	ds.set(k, v, ttl)
 	w.WriteHeader(http.StatusCreated)
 }

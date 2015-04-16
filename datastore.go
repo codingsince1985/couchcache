@@ -34,8 +34,12 @@ func (ds *datastore) get(k string) []byte {
 	return []byte(v)
 }
 
-func (ds *datastore) set(k string, v []byte) error {
-	err := (*couchbase.Bucket)(ds).SetRaw(k, 0, v)
+func (ds *datastore) set(k string, v []byte, ttl int) error {
+	if ttl > 2592000 {
+		ttl = 2592000
+	}
+
+	err := (*couchbase.Bucket)(ds).SetRaw(k, ttl, v)
 	if err != nil {
 		return err
 	}
