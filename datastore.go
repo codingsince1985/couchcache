@@ -4,6 +4,8 @@ import (
 	"github.com/couchbase/go-couchbase"
 )
 
+const MAX_TTL_IN_SEC = 2592000
+
 type datastore couchbase.Bucket
 
 func newDatastore(url, bucket string) (ds datastore, err error) {
@@ -35,8 +37,8 @@ func (ds *datastore) get(k string) []byte {
 }
 
 func (ds *datastore) set(k string, v []byte, ttl int) error {
-	if ttl > 2592000 {
-		ttl = 2592000
+	if ttl > MAX_TTL_IN_SEC {
+		ttl = MAX_TTL_IN_SEC
 	}
 
 	err := (*couchbase.Bucket)(ds).SetRaw(k, ttl, v)
