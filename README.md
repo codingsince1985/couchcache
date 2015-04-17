@@ -5,7 +5,7 @@ A caching service developed in Go. It provides REST APIs to populate and retriev
 
 To populate a key-value pair
 -
-POST request to `http://your-host-name:your-port/key/your-key?ttl=time-to-live-in-sec` with data in body
+POST request to `http://your-host-name:your-port/key/your-key[?ttl=time-to-live-in-sec]` with data in body
 
 To retrieve a key-value pair
 -
