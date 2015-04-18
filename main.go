@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"log"
@@ -11,7 +13,8 @@ import (
 var ds datastore
 
 func main() {
-	if d, err := newDatastore("http://Administrator:password@localhost:8091/", "default"); err != nil {
+	url, bucket := parseFlag()
+	if d, err := newDatastore(url, *bucket); err != nil {
 		log.Fatalln(err)
 	} else {
 		ds = d
@@ -23,6 +26,20 @@ func main() {
 	kr.Methods("POST").HandlerFunc(postHandler)
 
 	http.ListenAndServe(":8080", r)
+}
+
+func parseFlag() (string, *string) {
+	user := flag.String("user", "Administrator", "username (defaults to Administrator)")
+	pass := flag.String("pass", "password", "password (defaults to password)")
+	host := flag.String("host", "localhost", "host name (defaults to localhost)")
+	port := flag.Int("port", 8091, "port (defaults to 8091)")
+	bucket := flag.String("bucket", "default", "port (defaults to default)")
+
+	flag.Parse()
+
+	url := fmt.Sprintf("http://%s:%s@%s:%d", *user, *pass, *host, *port)
+	log.Println(url)
+	return url, bucket
 }
 
 func getHandler(w http.ResponseWriter, r *http.Request) {

@@ -3,6 +3,10 @@ Caching solution backed by Couchbase
 
 A caching service developed in Go. It provides REST APIs to populate and retrieve key-value pairs stored in Couchbase.
 
+To start couchcache
+-
+`./couchcache --user=username --pass=password --host=hostname --port=port --bucket==bucknetname`
+
 To populate a key-value pair
 -
 POST request to `http://your-host-name:your-port/key/your-key[?ttl=time-to-live-in-sec]` with data in body
