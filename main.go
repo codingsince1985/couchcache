@@ -8,9 +8,12 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 var ds datastore
+
+var timeoutInMilliseconds = time.Millisecond * 100
 
 func main() {
 	url, bucket := parseFlag()
@@ -44,14 +47,28 @@ func parseFlag() (string, *string) {
 
 func getHandler(w http.ResponseWriter, r *http.Request) {
 	k := mux.Vars(r)["key"]
-	if v := ds.get(k); v != nil {
-		w.Write(v)
-	} else {
-		http.Error(w, k+" not found", http.StatusNotFound)
+	ch := make(chan []byte)
+	go func() {
+		v := ds.get(k)
+		ch <- v
+	}()
+
+	select {
+	case v := <-ch:
+		if v != nil {
+			w.Write(v)
+		} else {
+			log.Println(k + ": not found")
+			http.Error(w, k+": not found", http.StatusNotFound)
+		}
+	case <-time.After(timeoutInMilliseconds):
+		log.Println(k + ": timeout")
+		http.Error(w, k+": timeout", http.StatusRequestTimeout)
 	}
 }
 
 func postHandler(w http.ResponseWriter, r *http.Request) {
+	k := mux.Vars(r)["key"]
 	ttl, err := strconv.Atoi(r.FormValue("ttl"))
 	if err != nil {
 		ttl = 0
@@ -59,10 +76,27 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 
 	v, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(k + ": bad request")
+		http.Error(w, k+": bad request", http.StatusBadRequest)
+		return
 	}
 
-	k := mux.Vars(r)["key"]
-	ds.set(k, v, ttl)
-	w.WriteHeader(http.StatusCreated)
+	ch := make(chan error)
+	go func() {
+		err := ds.set(k, v, ttl)
+		ch <- err
+	}()
+
+	select {
+	case err = <-ch:
+		if err == nil {
+			w.WriteHeader(http.StatusCreated)
+		} else {
+			log.Println(err)
+			http.Error(w, k+": cache server error", http.StatusInternalServerError)
+		}
+	case <-time.After(timeoutInMilliseconds):
+		log.Println(k + ": timeout")
+		http.Error(w, k+": timeout", http.StatusRequestTimeout)
+	}
 }
