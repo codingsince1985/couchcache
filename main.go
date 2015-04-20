@@ -46,6 +46,7 @@ func parseFlag() (string, *string) {
 }
 
 func getHandler(w http.ResponseWriter, r *http.Request) {
+	t0 := time.Now().UnixNano()
 	k := mux.Vars(r)["key"]
 	ch := make(chan []byte)
 	go func() {
@@ -55,6 +56,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case v := <-ch:
+		log.Println(time.Now().UnixNano() - t0)
 		if v != nil {
 			w.Write(v)
 		} else {
@@ -68,6 +70,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postHandler(w http.ResponseWriter, r *http.Request) {
+	t0 := time.Now().UnixNano()
 	k := mux.Vars(r)["key"]
 	ttl, err := strconv.Atoi(r.FormValue("ttl"))
 	if err != nil {
@@ -81,22 +84,10 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ch := make(chan error)
 	go func() {
-		err := ds.set(k, v, ttl)
-		ch <- err
+		ds.set(k, v, ttl)
 	}()
 
-	select {
-	case err = <-ch:
-		if err == nil {
-			w.WriteHeader(http.StatusCreated)
-		} else {
-			log.Println(err)
-			http.Error(w, k+": cache server error", http.StatusInternalServerError)
-		}
-	case <-time.After(timeoutInMilliseconds):
-		log.Println(k + ": timeout")
-		http.Error(w, k+": timeout", http.StatusRequestTimeout)
-	}
+	log.Println(time.Now().UnixNano() - t0)
+	w.WriteHeader(http.StatusCreated)
 }

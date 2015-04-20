@@ -9,17 +9,7 @@ const MAX_TTL_IN_SEC = 2592000
 type datastore couchbase.Bucket
 
 func newDatastore(url, bucket string) (ds datastore, err error) {
-	c, err := couchbase.Connect(url)
-	if err != nil {
-		return ds, err
-	}
-
-	p, err := c.GetPool("default")
-	if err != nil {
-		return ds, err
-	}
-
-	b, err := p.GetBucketWithAuth(bucket, bucket, "")
+	b, err := couchbase.GetBucket(url, "default", bucket)
 	if err != nil {
 		return ds, err
 	}
