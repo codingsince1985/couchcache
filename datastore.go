@@ -4,12 +4,22 @@ import (
 	"github.com/couchbase/go-couchbase"
 )
 
-const MAX_TTL_IN_SEC = 2592000
+const MAX_TTL_IN_SEC = 60 * 60 * 24 * 30
 
 type datastore couchbase.Bucket
 
-func newDatastore(url, bucket string) (ds datastore, err error) {
-	b, err := couchbase.GetBucket(url, "default", bucket)
+func newDatastore(url string, bucket, pass *string) (ds datastore, err error) {
+	c, err := couchbase.ConnectWithAuthCreds(url, *bucket, *pass)
+	if err != nil {
+		return ds, err
+	}
+
+	p, err := c.GetPool("default")
+	if err != nil {
+		return ds, err
+	}
+
+	b, err := p.GetBucketWithAuth(*bucket, *bucket, *pass)
 	if err != nil {
 		return ds, err
 	}

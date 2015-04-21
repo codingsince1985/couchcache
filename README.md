@@ -5,7 +5,7 @@ A caching service developed in Go. It provides REST APIs to populate and retriev
 
 To start couchcache
 -
-`./couchcache --user=username --pass=password --host=hostname --port=port --bucket==bucknetname`
+`./couchcache --host=hostname --port=port --bucket=bucketname --pass=password`
 
 To populate a key-value pair
 -

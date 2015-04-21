@@ -16,8 +16,8 @@ var ds datastore
 var timeoutInMilliseconds = time.Millisecond * 100
 
 func main() {
-	url, bucket := parseFlag()
-	if d, err := newDatastore(url, *bucket); err != nil {
+	url, bucket, pass := parseFlag()
+	if d, err := newDatastore(url, bucket, pass); err != nil {
 		log.Fatalln(err)
 	} else {
 		ds = d
@@ -28,21 +28,23 @@ func main() {
 	kr.Methods("GET").HandlerFunc(getHandler)
 	kr.Methods("POST").HandlerFunc(postHandler)
 
-	http.ListenAndServe(":8080", r)
+	err := http.ListenAndServe(":8080", r)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
 }
 
-func parseFlag() (string, *string) {
-	user := flag.String("user", "Administrator", "username (defaults to Administrator)")
-	pass := flag.String("pass", "password", "password (defaults to password)")
+func parseFlag() (string, *string, *string) {
 	host := flag.String("host", "localhost", "host name (defaults to localhost)")
 	port := flag.Int("port", 8091, "port (defaults to 8091)")
-	bucket := flag.String("bucket", "default", "port (defaults to default)")
+	bucket := flag.String("bucket", "couchcache", "username (defaults to couchcache)")
+	pass := flag.String("pass", "password", "password (defaults to password)")
 
 	flag.Parse()
 
-	url := fmt.Sprintf("http://%s:%s@%s:%d", *user, *pass, *host, *port)
+	url := fmt.Sprintf("http://%s:%d", *host, *port)
 	log.Println(url)
-	return url, bucket
+	return url, bucket, pass
 }
 
 func getHandler(w http.ResponseWriter, r *http.Request) {
@@ -56,7 +58,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case v := <-ch:
-		log.Println(time.Now().UnixNano() - t0)
+		log.Println("get ["+k+"] in ", time.Now().UnixNano()-t0)
 		if v != nil {
 			w.Write(v)
 		} else {
@@ -84,10 +86,23 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ch := make(chan error)
 	go func() {
-		ds.set(k, v, ttl)
+		err := ds.set(k, v, ttl)
+		ch <- err
 	}()
 
-	log.Println(time.Now().UnixNano() - t0)
-	w.WriteHeader(http.StatusCreated)
+	select {
+	case err = <-ch:
+		if err == nil {
+			log.Println("set ["+k+"] in ", time.Now().UnixNano()-t0)
+			w.WriteHeader(http.StatusCreated)
+		} else {
+			log.Println(err)
+			http.Error(w, k+": cache server error", http.StatusInternalServerError)
+		}
+	case <-time.After(timeoutInMilliseconds):
+		log.Println(k + ": timeout")
+		http.Error(w, k+": timeout", http.StatusRequestTimeout)
+	}
 }
