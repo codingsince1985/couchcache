@@ -42,9 +42,10 @@ func (ds *datastore) set(k string, v []byte, ttl int) error {
 	}
 
 	err := (*couchbase.Bucket)(ds).SetRaw(k, ttl, v)
-	if err != nil {
-		return err
-	}
+	return err
+}
 
-	return nil
+func (ds *datastore) delete(k string) error {
+	err := (*couchbase.Bucket)(ds).Delete(k)
+	return err
 }

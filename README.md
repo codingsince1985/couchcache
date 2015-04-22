@@ -5,15 +5,29 @@ A caching service developed in Go. It provides REST APIs to populate and retriev
 
 To start couchcache
 -
+Run couchcache with Couchbase server information
+
 `./couchcache --host=hostname --port=port --bucket=bucketname --pass=password`
 
-To populate a key-value pair
+default values
+```
+hostname = localhost
+port = 8091
+bucketname = couchcache
+pass = password
+```
+
+To store a key-value pair
 -
-POST request to `http://your-host-name:your-port/key/your-key[?ttl=time-to-live-in-sec]` with data in body
+Send POST request to `http://your-host-name:your-port/key/your-key[?ttl=time-to-live-in-sec]` with data in body
 
 To retrieve a key-value pair
 -
-GET request to `http://your-host-name:your-port/key/your-key`
+Send GET request to `http://your-host-name:your-port/key/your-key`
+
+To delete a key-value pair
+-
+Send DELETE request to `http://your-host-name:your-port/key/your-key`
 
 License
 =
