@@ -49,3 +49,8 @@ func (ds *datastore) delete(k string) error {
 	err := (*couchbase.Bucket)(ds).Delete(k)
 	return err
 }
+
+func (ds *datastore) append(k string, v []byte) error {
+	err := (*couchbase.Bucket)(ds).Append(k, v)
+	return err
+}

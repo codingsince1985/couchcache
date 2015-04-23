@@ -27,6 +27,7 @@ func main() {
 	kr.Methods("GET").HandlerFunc(getHandler)
 	kr.Methods("POST").HandlerFunc(postHandler)
 	kr.Methods("DELETE").HandlerFunc(deleteHandler)
+	kr.Methods("PUT").HandlerFunc(putHandler)
 
 	if err = http.ListenAndServe(":8080", r); err != nil {
 		log.Fatal("ListenAndServe: ", err)
@@ -117,6 +118,37 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	case err := <-ch:
 		if err == nil {
 			log.Println("delete ["+k+"] in ", time.Now().UnixNano()-t0)
+			w.WriteHeader(http.StatusOK)
+		} else {
+			log.Println(err)
+			http.Error(w, k+": cache server error", http.StatusInternalServerError)
+		}
+	case <-time.After(timeoutInMilliseconds):
+		returnTimeout(w, k)
+	}
+}
+
+func putHandler(w http.ResponseWriter, r *http.Request) {
+	t0 := time.Now().UnixNano()
+	k := mux.Vars(r)["key"]
+
+	v, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Println(k + ": bad request")
+		http.Error(w, k+": bad request", http.StatusBadRequest)
+		return
+	}
+
+	ch := make(chan error)
+	go func() {
+		err := ds.append(k, v)
+		ch <- err
+	}()
+
+	select {
+	case err = <-ch:
+		if err == nil {
+			log.Println("append ["+k+"] in ", time.Now().UnixNano()-t0)
 			w.WriteHeader(http.StatusOK)
 		} else {
 			log.Println(err)

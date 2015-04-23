@@ -21,13 +21,17 @@ To store a key-value pair
 -
 Send POST request to `http://your-host-name:your-port/key/your-key[?ttl=time-to-live-in-sec]` with data in body
 
-To retrieve a key-value pair
+To retrieve a key
 -
 Send GET request to `http://your-host-name:your-port/key/your-key`
 
-To delete a key-value pair
+To delete a key
 -
 Send DELETE request to `http://your-host-name:your-port/key/your-key`
+
+To append a key
+-
+Send PUT request to `http://your-host-name:your-port/key/your-key`
 
 License
 =
