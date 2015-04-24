@@ -11,16 +11,17 @@ import (
 	"time"
 )
 
-var ds datastore
+var ds datastorer
 
 var timeoutInMilliseconds = time.Millisecond * 100
 
 func main() {
-	var err error
 	url, bucket, pass := parseFlag()
-	if ds, err = newDatastore(url, bucket, pass); err != nil {
+	cds, err := newDatastore(url, bucket, pass)
+	if err != nil {
 		log.Fatalln(err)
 	}
+	ds = datastorer(cds)
 
 	r := mux.NewRouter()
 	kr := r.PathPrefix("/key/{key}").Subrouter()
