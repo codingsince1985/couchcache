@@ -1,15 +1,20 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"github.com/couchbase/go-couchbase"
+	"log"
 )
 
 const MAX_TTL_IN_SEC = 60 * 60 * 24 * 30
 
 type couchbaseDatastore couchbase.Bucket
 
-func newDatastore(url string, bucket, pass *string) (ds *couchbaseDatastore, err error) {
-	c, err := couchbase.ConnectWithAuthCreds(url, *bucket, *pass)
+func newDatastore() (ds datastorer, err error) {
+	url, bucket, pass := parseFlag()
+
+	c, err := couchbase.ConnectWithAuthCreds(url, bucket, pass)
 	if err != nil {
 		return ds, err
 	}
@@ -19,12 +24,25 @@ func newDatastore(url string, bucket, pass *string) (ds *couchbaseDatastore, err
 		return ds, err
 	}
 
-	b, err := p.GetBucketWithAuth(*bucket, *bucket, *pass)
+	b, err := p.GetBucketWithAuth(bucket, bucket, pass)
 	if err != nil {
 		return ds, err
 	}
 
-	return (*couchbaseDatastore)(b), nil
+	return (datastorer)((*couchbaseDatastore)(b)), nil
+}
+
+func parseFlag() (string, string, string) {
+	host := flag.String("host", "localhost", "host name (defaults to localhost)")
+	port := flag.Int("port", 8091, "port number (defaults to 8091)")
+	bucket := flag.String("bucket", "couchcache", "bucket name (defaults to couchcache)")
+	pass := flag.String("pass", "password", "password (defaults to password)")
+
+	flag.Parse()
+
+	url := fmt.Sprintf("http://%s:%d", *host, *port)
+	log.Println(url)
+	return url, *bucket, *pass
 }
 
 func (ds *couchbaseDatastore) get(k string) []byte {

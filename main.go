@@ -1,8 +1,6 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"log"
@@ -16,12 +14,11 @@ var ds datastorer
 var timeoutInMilliseconds = time.Millisecond * 100
 
 func main() {
-	url, bucket, pass := parseFlag()
-	cds, err := newDatastore(url, bucket, pass)
-	if err != nil {
+	if d, err := newDatastore(); err != nil {
 		log.Fatalln(err)
+	} else {
+		ds = d
 	}
-	ds = datastorer(cds)
 
 	r := mux.NewRouter()
 	kr := r.PathPrefix("/key/{key}").Subrouter()
@@ -30,22 +27,9 @@ func main() {
 	kr.Methods("DELETE").HandlerFunc(deleteHandler)
 	kr.Methods("PUT").HandlerFunc(putHandler)
 
-	if err = http.ListenAndServe(":8080", r); err != nil {
+	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
-}
-
-func parseFlag() (string, *string, *string) {
-	host := flag.String("host", "localhost", "host name (defaults to localhost)")
-	port := flag.Int("port", 8091, "port number (defaults to 8091)")
-	bucket := flag.String("bucket", "couchcache", "bucket name (defaults to couchcache)")
-	pass := flag.String("pass", "password", "password (defaults to password)")
-
-	flag.Parse()
-
-	url := fmt.Sprintf("http://%s:%d", *host, *port)
-	log.Println(url)
-	return url, bucket, pass
 }
 
 func getHandler(w http.ResponseWriter, r *http.Request) {
