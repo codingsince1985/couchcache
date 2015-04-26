@@ -17,7 +17,7 @@ func main() {
 	if d, err := newDatastore(); err != nil {
 		log.Fatalln(err)
 	} else {
-		ds = d
+		ds = datastorer(d)
 	}
 
 	r := mux.NewRouter()

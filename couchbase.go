@@ -11,7 +11,7 @@ const MAX_TTL_IN_SEC = 60 * 60 * 24 * 30
 
 type couchbaseDatastore couchbase.Bucket
 
-func newDatastore() (ds datastorer, err error) {
+func newDatastore() (ds *couchbaseDatastore, err error) {
 	url, bucket, pass := parseFlag()
 
 	c, err := couchbase.ConnectWithAuthCreds(url, bucket, pass)
@@ -29,7 +29,7 @@ func newDatastore() (ds datastorer, err error) {
 		return ds, err
 	}
 
-	return (datastorer)((*couchbaseDatastore)(b)), nil
+	return (*couchbaseDatastore)(b), nil
 }
 
 func parseFlag() (string, string, string) {
