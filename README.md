@@ -32,7 +32,7 @@ To delete a key
 -
 Send DELETE request to endpoint
 
-To append a key
+To append data for a key
 -
 Send PUT request to endpoint with data in body
 
