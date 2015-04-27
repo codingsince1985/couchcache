@@ -35,6 +35,7 @@ func main() {
 func getHandler(w http.ResponseWriter, r *http.Request) {
 	t0 := time.Now().UnixNano()
 	k := mux.Vars(r)["key"]
+
 	ch := make(chan []byte)
 	go func() {
 		v := ds.get(k)
@@ -58,13 +59,10 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 func postHandler(w http.ResponseWriter, r *http.Request) {
 	t0 := time.Now().UnixNano()
 	k := mux.Vars(r)["key"]
-	ttl, err := strconv.Atoi(r.FormValue("ttl"))
-	if err != nil {
-		ttl = 0
-	}
+	ttl, _ := strconv.Atoi(r.FormValue("ttl"))
 
-	v, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	v, _ := ioutil.ReadAll(r.Body)
+	if len(v) == 0 {
 		log.Println(k + ": bad request")
 		http.Error(w, k+": bad request", http.StatusBadRequest)
 		return
@@ -77,7 +75,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	select {
-	case err = <-ch:
+	case err := <-ch:
 		if err == nil {
 			log.Println("set ["+k+"] in ", time.Now().UnixNano()-t0)
 			w.WriteHeader(http.StatusCreated)
@@ -93,6 +91,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	t0 := time.Now().UnixNano()
 	k := mux.Vars(r)["key"]
+
 	ch := make(chan error)
 	go func() {
 		err := ds.delete(k)
@@ -117,8 +116,8 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 	t0 := time.Now().UnixNano()
 	k := mux.Vars(r)["key"]
 
-	v, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	v, _ := ioutil.ReadAll(r.Body)
+	if len(v) == 0 {
 		log.Println(k + ": bad request")
 		http.Error(w, k+": bad request", http.StatusBadRequest)
 		return
@@ -131,7 +130,7 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	select {
-	case err = <-ch:
+	case err := <-ch:
 		if err == nil {
 			log.Println("append ["+k+"] in ", time.Now().UnixNano()-t0)
 			w.WriteHeader(http.StatusOK)

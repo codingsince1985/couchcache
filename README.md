@@ -16,22 +16,25 @@ port = 8091
 bucketname = couchcache
 pass = password
 ```
+Cache service endpoint
+-
+`http://HOSTNAME:PORT/key/KEY`
 
 To store a key-value pair
 -
-Send POST request to `http://your-host-name:your-port/key/your-key[?ttl=time-to-live-in-sec]` with data in body
+Send POST request to endpoint with data in body, optionally set TTL by providing `?ttl=TTL_IN_SEC`
 
 To retrieve a key
 -
-Send GET request to `http://your-host-name:your-port/key/your-key`
+Send GET request to endpoint
 
 To delete a key
 -
-Send DELETE request to `http://your-host-name:your-port/key/your-key`
+Send DELETE request to endpoint
 
 To append a key
 -
-Send PUT request to `http://your-host-name:your-port/key/your-key`
+Send PUT request to endpoint with data in body
 
 License
 =
