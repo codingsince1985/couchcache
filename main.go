@@ -38,8 +38,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 
 	ch := make(chan []byte)
 	go func() {
-		v := ds.get(k)
-		ch <- v
+		ch <- ds.get(k)
 	}()
 
 	select {
@@ -70,8 +69,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 
 	ch := make(chan error)
 	go func() {
-		err := ds.set(k, v, ttl)
-		ch <- err
+		ch <- ds.set(k, v, ttl)
 	}()
 
 	select {
@@ -94,8 +92,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	ch := make(chan error)
 	go func() {
-		err := ds.delete(k)
-		ch <- err
+		ch <- ds.delete(k)
 	}()
 
 	select {
@@ -125,8 +122,7 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 
 	ch := make(chan error)
 	go func() {
-		err := ds.append(k, v)
-		ch <- err
+		ch <- ds.append(k, v)
 	}()
 
 	select {

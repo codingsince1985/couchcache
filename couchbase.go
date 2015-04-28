@@ -46,29 +46,26 @@ func parseFlag() (string, string, string) {
 }
 
 func (ds *couchbaseDatastore) get(k string) []byte {
-	v, err := (*couchbase.Bucket)(ds).GetRaw(k)
-	if err != nil {
-		return nil
+	if v, err := (*couchbase.Bucket)(ds).GetRaw(k); err == nil {
+		return []byte(v)
 	}
-
-	return []byte(v)
+	return nil
 }
 
 func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 	if ttl > MAX_TTL_IN_SEC {
 		ttl = MAX_TTL_IN_SEC
+	} else if ttl < 0 {
+		ttl = 0
 	}
 
-	err := (*couchbase.Bucket)(ds).SetRaw(k, ttl, v)
-	return err
+	return (*couchbase.Bucket)(ds).SetRaw(k, ttl, v)
 }
 
 func (ds *couchbaseDatastore) delete(k string) error {
-	err := (*couchbase.Bucket)(ds).Delete(k)
-	return err
+	return (*couchbase.Bucket)(ds).Delete(k)
 }
 
 func (ds *couchbaseDatastore) append(k string, v []byte) error {
-	err := (*couchbase.Bucket)(ds).Append(k, v)
-	return err
+	return (*couchbase.Bucket)(ds).Append(k, v)
 }
