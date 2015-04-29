@@ -1,11 +1,11 @@
-Caching solution backed by Couchbase
+couchcache
 =
 
-A caching service developed in Go. It provides REST APIs to populate and retrieve key-value pairs stored in Couchbase.
+A caching service developed in Go. It provides REST APIs to access key-value pairs stored in Couchbase.
 
 To start couchcache
 -
-Run couchcache with Couchbase server and bucket information
+Run couchcache with Couchbase server (host and port) and bucket (name and password) information
 
 `./couchcache --host=HOST --port=PORT --bucket=BUCKET --pass=PASS`
 
@@ -24,19 +24,19 @@ Cache service endpoint
 
 To store a key-value pair
 -
-Send POST request to endpoint with data in body, optionally set TTL by providing `?ttl=TTL_IN_SEC`
+Send `POST` request to endpoint with data in body, optionally set TTL by providing `?ttl=TTL_IN_SEC`
 
 To retrieve a key
 -
-Send GET request to endpoint
+Send `GET` request to endpoint
 
 To delete a key
 -
-Send DELETE request to endpoint
+Send `DELETE` request to endpoint
 
 To append data for a key
 -
-Send PUT request to endpoint with data in body
+Send `PUT` request to endpoint with data in body
 
 Limitation
 =
