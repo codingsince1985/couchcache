@@ -5,7 +5,7 @@ A caching service developed in Go. It provides REST APIs to populate and retriev
 
 To start couchcache
 -
-Run couchcache with Couchbase server information
+Run couchcache with Couchbase server and bucket information
 
 `./couchcache --host=hostname --port=port --bucket=bucketname --pass=password`
 
@@ -35,6 +35,13 @@ Send DELETE request to endpoint
 To append data for a key
 -
 Send PUT request to endpoint with data in body
+
+Limitation
+=
+* Max key length is 250 bytes
+* Max value size is 20 MB
+
+See [Couchbase Limits](http://docs.couchbase.com/admin/admin/Misc/limits.html).
 
 License
 =

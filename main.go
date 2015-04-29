@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -43,7 +44,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case v := <-ch:
-		log.Println("get ["+k+"] in ", time.Now().UnixNano()-t0)
+		log.Println("get ["+k+"] in", timeSpent(t0), "ms")
 		if v != nil {
 			w.Write(v)
 		} else {
@@ -61,12 +62,6 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	ttl, _ := strconv.Atoi(r.FormValue("ttl"))
 
 	v, _ := ioutil.ReadAll(r.Body)
-	if len(v) == 0 {
-		log.Println(k + ": bad request")
-		http.Error(w, k+": bad request", http.StatusBadRequest)
-		return
-	}
-
 	ch := make(chan error)
 	go func() {
 		ch <- ds.set(k, v, ttl)
@@ -74,12 +69,16 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case err := <-ch:
+		log.Println("set ["+k+"] in", timeSpent(t0), "ms")
 		if err == nil {
-			log.Println("set ["+k+"] in ", time.Now().UnixNano()-t0)
 			w.WriteHeader(http.StatusCreated)
 		} else {
-			log.Println(err)
-			http.Error(w, k+": cache server error", http.StatusInternalServerError)
+			switch err {
+			case TOO_BIG_ERROR, EMPTY_BODY:
+				http.Error(w, k+": value is too big", http.StatusBadRequest)
+			default:
+				http.Error(w, k+": cache server error", http.StatusInternalServerError)
+			}
 		}
 	case <-time.After(timeoutInMilliseconds):
 		returnTimeout(w, k)
@@ -97,11 +96,10 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case err := <-ch:
+		log.Println("delete ["+k+"] in", timeSpent(t0), "ms")
 		if err == nil {
-			log.Println("delete ["+k+"] in ", time.Now().UnixNano()-t0)
 			w.WriteHeader(http.StatusOK)
 		} else {
-			log.Println(err)
 			http.Error(w, k+": cache server error", http.StatusInternalServerError)
 		}
 	case <-time.After(timeoutInMilliseconds):
@@ -114,12 +112,6 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 	k := mux.Vars(r)["key"]
 
 	v, _ := ioutil.ReadAll(r.Body)
-	if len(v) == 0 {
-		log.Println(k + ": bad request")
-		http.Error(w, k+": bad request", http.StatusBadRequest)
-		return
-	}
-
 	ch := make(chan error)
 	go func() {
 		ch <- ds.append(k, v)
@@ -127,12 +119,18 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case err := <-ch:
+		log.Println("append ["+k+"] in", timeSpent(t0), "ms")
 		if err == nil {
-			log.Println("append ["+k+"] in ", time.Now().UnixNano()-t0)
 			w.WriteHeader(http.StatusOK)
 		} else {
-			log.Println(err)
-			http.Error(w, k+": cache server error", http.StatusInternalServerError)
+			switch err {
+			case NOT_FOUND_ERROR:
+				http.Error(w, k+": not found", http.StatusNotFound)
+			case TOO_BIG_ERROR, EMPTY_BODY:
+				http.Error(w, k+": value is too big", http.StatusBadRequest)
+			default:
+				http.Error(w, k+": cache server error", http.StatusInternalServerError)
+			}
 		}
 	case <-time.After(timeoutInMilliseconds):
 		returnTimeout(w, k)
@@ -142,4 +140,8 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 func returnTimeout(w http.ResponseWriter, k string) {
 	log.Println(k + ": timeout")
 	http.Error(w, k+": timeout", http.StatusRequestTimeout)
+}
+
+func timeSpent(t0 int64) int64 {
+	return int64(math.Floor(float64(time.Now().UnixNano()-t0)/1000000 + .5))
 }
