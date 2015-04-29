@@ -7,18 +7,20 @@ To start couchcache
 -
 Run couchcache with Couchbase server and bucket information
 
-`./couchcache --host=hostname --port=port --bucket=bucketname --pass=password`
+`./couchcache --host=HOST --port=PORT --bucket=BUCKET --pass=PASS`
 
 default values
 ```
-hostname = localhost
-port = 8091
-bucketname = couchcache
-pass = password
+host: localhost
+port: 8091
+bucket: couchcache
+pass: password
 ```
+For example, `./couchcache --host=10.99.107.192 --port=8091 --bucket=cachebucket --pass=c@che1t`
+
 Cache service endpoint
 -
-`http://HOSTNAME:PORT/key/KEY`
+`http://HOSTNAME:8080/key/KEY`
 
 To store a key-value pair
 -
