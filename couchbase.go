@@ -8,8 +8,11 @@ import (
 	"log"
 )
 
-const MAX_TTL_IN_SEC = 60 * 60 * 24 * 30
-const MAX_SIZE_IN_BYTE = 20 * 1024 * 1024
+const (
+	MAX_TTL_IN_SEC   = 60 * 60 * 24 * 30
+	MAX_SIZE_IN_BYTE = 20 * 1024 * 1024
+	MAX_KEY_LENGTH   = 250
+)
 
 type couchbaseDatastore couchbase.Bucket
 
@@ -50,6 +53,10 @@ func (ds *couchbaseDatastore) get(k string) []byte {
 }
 
 func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
+	if ds.invalid(k) {
+		return INVALID_KEY
+	}
+
 	if ttl > MAX_TTL_IN_SEC {
 		ttl = MAX_TTL_IN_SEC
 	} else if ttl < 0 {
@@ -80,18 +87,28 @@ func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 }
 
 func (ds *couchbaseDatastore) delete(k string) error {
+	if ds.invalid(k) {
+		return INVALID_KEY
+	}
+
 	if err := (*couchbase.Bucket)(ds).Delete(k); err != nil {
 		response := err.(*gomemcached.MCResponse)
 		log.Println(response)
-		if (*response).Status == gomemcached.KEY_ENOENT {
+		switch (*response).Status {
+		case gomemcached.KEY_ENOENT:
 			return nil
+		default:
+			return err
 		}
-		return err
 	}
 	return nil
 }
 
 func (ds *couchbaseDatastore) append(k string, v []byte) error {
+	if ds.invalid(k) {
+		return INVALID_KEY
+	}
+
 	if len(v) == 0 {
 		log.Println(k, "is empty")
 		return EMPTY_BODY
@@ -115,4 +132,8 @@ func (ds *couchbaseDatastore) append(k string, v []byte) error {
 		}
 	}
 	return nil
+}
+
+func (ds *couchbaseDatastore) invalid(key string) bool {
+	return len(key) > MAX_KEY_LENGTH
 }

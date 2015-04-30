@@ -1,4 +1,4 @@
-couchcache
+Couchcache
 =
 
 A caching service developed in Go. It provides REST APIs to access key-value pairs stored in Couchbase.
@@ -20,7 +20,7 @@ For example, `./couchcache --host=10.99.107.192 --port=8091 --bucket=cachebucket
 
 Cache service endpoint
 -
-`http://HOSTNAME:8080/key/KEY`
+`http://HOST:8080/key/KEY`
 
 To store a key-value pair
 -

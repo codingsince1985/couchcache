@@ -37,6 +37,11 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 	t0 := time.Now().UnixNano()
 	k := mux.Vars(r)["key"]
 
+	if ds.invalid(k) {
+		http.Error(w, k+": invalid key", http.StatusBadRequest)
+		return
+	}
+
 	ch := make(chan []byte)
 	go func() {
 		ch <- ds.get(k)
@@ -61,7 +66,12 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	k := mux.Vars(r)["key"]
 	ttl, _ := strconv.Atoi(r.FormValue("ttl"))
 
-	v, _ := ioutil.ReadAll(r.Body)
+	v, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, k+": can't get value", http.StatusBadRequest)
+		return
+	}
+
 	ch := make(chan error)
 	go func() {
 		ch <- ds.set(k, v, ttl)
@@ -76,6 +86,8 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 			switch err {
 			case TOO_BIG_ERROR, EMPTY_BODY:
 				http.Error(w, k+": value is too big", http.StatusBadRequest)
+			case INVALID_KEY:
+				http.Error(w, k+": invalid key", http.StatusBadRequest)
 			default:
 				http.Error(w, k+": cache server error", http.StatusInternalServerError)
 			}
@@ -100,7 +112,12 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			w.WriteHeader(http.StatusOK)
 		} else {
-			http.Error(w, k+": cache server error", http.StatusInternalServerError)
+			switch err {
+			case INVALID_KEY:
+				http.Error(w, k+": invalid key", http.StatusBadRequest)
+			default:
+				http.Error(w, k+": cache server error", http.StatusInternalServerError)
+			}
 		}
 	case <-time.After(timeoutInMilliseconds):
 		returnTimeout(w, k)
@@ -128,6 +145,8 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, k+": not found", http.StatusNotFound)
 			case TOO_BIG_ERROR, EMPTY_BODY:
 				http.Error(w, k+": value is too big", http.StatusBadRequest)
+			case INVALID_KEY:
+				http.Error(w, k+": invalid key", http.StatusBadRequest)
 			default:
 				http.Error(w, k+": cache server error", http.StatusInternalServerError)
 			}
