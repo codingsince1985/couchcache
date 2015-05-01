@@ -53,7 +53,7 @@ func (ds *couchbaseDatastore) get(k string) []byte {
 }
 
 func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
-	if ds.invalid(k) {
+	if err := ds.validKey(k); err != nil {
 		return INVALID_KEY
 	}
 
@@ -70,7 +70,7 @@ func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 
 	if len(v) > MAX_SIZE_IN_BYTE {
 		log.Println(k, "is too big")
-		return TOO_BIG_ERROR
+		return OVERSIZED_BODY
 	}
 
 	if err := (*couchbase.Bucket)(ds).SetRaw(k, ttl, v); err != nil {
@@ -78,7 +78,7 @@ func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 		log.Println(response)
 		switch (*response).Status {
 		case gomemcached.E2BIG:
-			return TOO_BIG_ERROR
+			return OVERSIZED_BODY
 		default:
 			return err
 		}
@@ -87,7 +87,7 @@ func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 }
 
 func (ds *couchbaseDatastore) delete(k string) error {
-	if ds.invalid(k) {
+	if err := ds.validKey(k); err != nil {
 		return INVALID_KEY
 	}
 
@@ -105,7 +105,7 @@ func (ds *couchbaseDatastore) delete(k string) error {
 }
 
 func (ds *couchbaseDatastore) append(k string, v []byte) error {
-	if ds.invalid(k) {
+	if err := ds.validKey(k); err != nil {
 		return INVALID_KEY
 	}
 
@@ -116,7 +116,7 @@ func (ds *couchbaseDatastore) append(k string, v []byte) error {
 
 	if len(v) > MAX_SIZE_IN_BYTE {
 		log.Println(k, "is too big")
-		return TOO_BIG_ERROR
+		return OVERSIZED_BODY
 	}
 
 	if err := (*couchbase.Bucket)(ds).Append(k, v); err != nil {
@@ -126,7 +126,7 @@ func (ds *couchbaseDatastore) append(k string, v []byte) error {
 		case gomemcached.NOT_STORED:
 			return NOT_FOUND_ERROR
 		case gomemcached.E2BIG:
-			return TOO_BIG_ERROR
+			return OVERSIZED_BODY
 		default:
 			return err
 		}
@@ -134,6 +134,23 @@ func (ds *couchbaseDatastore) append(k string, v []byte) error {
 	return nil
 }
 
-func (ds *couchbaseDatastore) invalid(key string) bool {
-	return len(key) > MAX_KEY_LENGTH
+func (ds *couchbaseDatastore) validKey(key string) error {
+	if len(key) < 1 || len(key) > MAX_KEY_LENGTH {
+		return INVALID_KEY
+	}
+	return nil
+}
+
+func (ds *couchbaseDatastore) validValue(v []byte) error {
+	if len(v) == 0 {
+		log.Println("body is empty")
+		return EMPTY_BODY
+	}
+
+	if len(v) > MAX_SIZE_IN_BYTE {
+		log.Println("body is too large")
+		return OVERSIZED_BODY
+	}
+
+	return nil
 }

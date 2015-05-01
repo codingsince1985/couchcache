@@ -37,7 +37,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 	t0 := time.Now().UnixNano()
 	k := mux.Vars(r)["key"]
 
-	if ds.invalid(k) {
+	if err := ds.validKey(k); err != nil {
 		http.Error(w, k+": invalid key", http.StatusBadRequest)
 		return
 	}
@@ -84,8 +84,8 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusCreated)
 		} else {
 			switch err {
-			case TOO_BIG_ERROR, EMPTY_BODY:
-				http.Error(w, k+": value is too big", http.StatusBadRequest)
+			case OVERSIZED_BODY, EMPTY_BODY:
+				http.Error(w, k+": value is invalid", http.StatusBadRequest)
 			case INVALID_KEY:
 				http.Error(w, k+": invalid key", http.StatusBadRequest)
 			default:
@@ -143,8 +143,8 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 			switch err {
 			case NOT_FOUND_ERROR:
 				http.Error(w, k+": not found", http.StatusNotFound)
-			case TOO_BIG_ERROR, EMPTY_BODY:
-				http.Error(w, k+": value is too big", http.StatusBadRequest)
+			case OVERSIZED_BODY, EMPTY_BODY:
+				http.Error(w, k+": value is invalid", http.StatusBadRequest)
 			case INVALID_KEY:
 				http.Error(w, k+": invalid key", http.StatusBadRequest)
 			default:
