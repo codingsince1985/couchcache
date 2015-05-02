@@ -57,20 +57,14 @@ func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 		return INVALID_KEY
 	}
 
+	if err := ds.validValue(v); err != nil {
+		return err
+	}
+
 	if ttl > MAX_TTL_IN_SEC {
 		ttl = MAX_TTL_IN_SEC
 	} else if ttl < 0 {
 		ttl = 0
-	}
-
-	if len(v) == 0 {
-		log.Println(k, "is empty")
-		return EMPTY_BODY
-	}
-
-	if len(v) > MAX_SIZE_IN_BYTE {
-		log.Println(k, "is too big")
-		return OVERSIZED_BODY
 	}
 
 	if err := (*couchbase.Bucket)(ds).SetRaw(k, ttl, v); err != nil {
@@ -109,14 +103,8 @@ func (ds *couchbaseDatastore) append(k string, v []byte) error {
 		return INVALID_KEY
 	}
 
-	if len(v) == 0 {
-		log.Println(k, "is empty")
-		return EMPTY_BODY
-	}
-
-	if len(v) > MAX_SIZE_IN_BYTE {
-		log.Println(k, "is too big")
-		return OVERSIZED_BODY
+	if err := ds.validValue(v); err != nil {
+		return err
 	}
 
 	if err := (*couchbase.Bucket)(ds).Append(k, v); err != nil {

@@ -128,7 +128,12 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 	t0 := time.Now().UnixNano()
 	k := mux.Vars(r)["key"]
 
-	v, _ := ioutil.ReadAll(r.Body)
+	v, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, k+": can't get value", http.StatusBadRequest)
+		return
+	}
+
 	ch := make(chan error)
 	go func() {
 		ch <- ds.append(k, v)
