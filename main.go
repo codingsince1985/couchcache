@@ -83,14 +83,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			w.WriteHeader(http.StatusCreated)
 		} else {
-			switch err {
-			case OVERSIZED_BODY, EMPTY_BODY:
-				http.Error(w, k+": value is invalid", http.StatusBadRequest)
-			case INVALID_KEY:
-				http.Error(w, k+": invalid key", http.StatusBadRequest)
-			default:
-				http.Error(w, k+": cache server error", http.StatusInternalServerError)
-			}
+			errorToStatus(err, w)
 		}
 	case <-time.After(timeoutInMilliseconds):
 		returnTimeout(w, k)
@@ -112,12 +105,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			w.WriteHeader(http.StatusOK)
 		} else {
-			switch err {
-			case INVALID_KEY:
-				http.Error(w, k+": invalid key", http.StatusBadRequest)
-			default:
-				http.Error(w, k+": cache server error", http.StatusInternalServerError)
-			}
+			errorToStatus(err, w)
 		}
 	case <-time.After(timeoutInMilliseconds):
 		returnTimeout(w, k)
@@ -145,16 +133,7 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			w.WriteHeader(http.StatusOK)
 		} else {
-			switch err {
-			case NOT_FOUND_ERROR:
-				http.Error(w, k+": not found", http.StatusNotFound)
-			case OVERSIZED_BODY, EMPTY_BODY:
-				http.Error(w, k+": value is invalid", http.StatusBadRequest)
-			case INVALID_KEY:
-				http.Error(w, k+": invalid key", http.StatusBadRequest)
-			default:
-				http.Error(w, k+": cache server error", http.StatusInternalServerError)
-			}
+			errorToStatus(err, w)
 		}
 	case <-time.After(timeoutInMilliseconds):
 		returnTimeout(w, k)
@@ -168,4 +147,17 @@ func returnTimeout(w http.ResponseWriter, k string) {
 
 func timeSpent(t0 int64) int64 {
 	return int64(math.Floor(float64(time.Now().UnixNano()-t0)/1000000 + .5))
+}
+
+func errorToStatus(err error, w http.ResponseWriter) {
+	switch err {
+	case NOT_FOUND_ERROR:
+		http.Error(w, "key not found", http.StatusNotFound)
+	case OVERSIZED_BODY, EMPTY_BODY:
+		http.Error(w, "invalid value", http.StatusBadRequest)
+	case INVALID_KEY:
+		http.Error(w, "invalid key", http.StatusBadRequest)
+	default:
+		http.Error(w, "cache server error", http.StatusInternalServerError)
+	}
 }
