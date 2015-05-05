@@ -85,7 +85,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			errorToStatus(err, w)
 		}
-	case <-time.After(timeoutInMilliseconds):
+	case <-time.After(timeoutInMilliseconds * 10):
 		returnTimeout(w, k)
 	}
 }
@@ -122,21 +122,12 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ch := make(chan error)
-	go func() {
-		ch <- ds.append(k, v)
-	}()
-
-	select {
-	case err := <-ch:
-		log.Println("append ["+k+"] in", timeSpent(t0), "ms")
-		if err == nil {
-			w.WriteHeader(http.StatusOK)
-		} else {
-			errorToStatus(err, w)
-		}
-	case <-time.After(timeoutInMilliseconds):
-		returnTimeout(w, k)
+	err = ds.append(k, v)
+	log.Println("append ["+k+"] in", timeSpent(t0), "ms")
+	if err == nil {
+		w.WriteHeader(http.StatusOK)
+	} else {
+		errorToStatus(err, w)
 	}
 }
 

@@ -90,7 +90,7 @@ func (ds *couchbaseDatastore) delete(k string) error {
 		log.Println(response)
 		switch (*response).Status {
 		case gomemcached.KEY_ENOENT:
-			return nil
+			return NOT_FOUND_ERROR
 		default:
 			return err
 		}
