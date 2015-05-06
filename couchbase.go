@@ -3,8 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/couchbase/go-couchbase"
-	"github.com/couchbase/gomemcached"
+	"github.com/couchbaselabs/gocb"
 	"log"
 )
 
@@ -14,16 +13,14 @@ const (
 	MAX_KEY_LENGTH   = 250
 )
 
-type couchbaseDatastore couchbase.Bucket
+type couchbaseDatastore gocb.Bucket
 
 func newDatastore() (ds *couchbaseDatastore, err error) {
 	url, bucket, pass := parseFlag()
 
-	if c, err := couchbase.ConnectWithAuthCreds(url, bucket, pass); err == nil {
-		if p, err := c.GetPool("default"); err == nil {
-			if b, err := p.GetBucketWithAuth(bucket, bucket, pass); err == nil {
-				return (*couchbaseDatastore)(b), nil
-			}
+	if c, err := gocb.Connect(url); err == nil {
+		if b, err := c.OpenBucket(bucket, pass); err == nil {
+			return (*couchbaseDatastore)(b), nil
 		}
 	}
 	return nil, err
@@ -43,12 +40,12 @@ func parseFlag() (string, string, string) {
 }
 
 func (ds *couchbaseDatastore) get(k string) []byte {
-	if v, err := (*couchbase.Bucket)(ds).GetRaw(k); err == nil {
-		return []byte(v)
-	} else {
-		response := err.(*gomemcached.MCResponse)
-		log.Println(response)
+	val := make([]uint8, 1)
+	if _, err := (*gocb.Bucket)(ds).Get(k, &val); err != nil {
+		log.Println(err)
 		return nil
+	} else {
+		return []byte(val)
 	}
 }
 
@@ -67,58 +64,52 @@ func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 		ttl = 0
 	}
 
-	if err := (*couchbase.Bucket)(ds).SetRaw(k, ttl, v); err != nil {
-		response := err.(*gomemcached.MCResponse)
-		log.Println(response)
-		switch (*response).Status {
-		case gomemcached.E2BIG:
-			return OVERSIZED_BODY
-		default:
-			return err
-		}
+	if _, err := (*gocb.Bucket)(ds).Insert(k, v, uint32(ttl)); err != nil {
+		log.Println(err)
+		return err
 	}
 	return nil
 }
 
 func (ds *couchbaseDatastore) delete(k string) error {
-	if err := ds.validKey(k); err != nil {
-		return INVALID_KEY
-	}
+	// if err := ds.validKey(k); err != nil {
+	// 	return INVALID_KEY
+	// }
 
-	if err := (*couchbase.Bucket)(ds).Delete(k); err != nil {
-		response := err.(*gomemcached.MCResponse)
-		log.Println(response)
-		switch (*response).Status {
-		case gomemcached.KEY_ENOENT:
-			return NOT_FOUND_ERROR
-		default:
-			return err
-		}
-	}
+	// if err := (*couchbase.Bucket)(ds).Delete(k); err != nil {
+	// 	response := err.(*gomemcached.MCResponse)
+	// 	log.Println(response)
+	// 	switch (*response).Status {
+	// 	case gomemcached.KEY_ENOENT:
+	// 		return NOT_FOUND_ERROR
+	// 	default:
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 
 func (ds *couchbaseDatastore) append(k string, v []byte) error {
-	if err := ds.validKey(k); err != nil {
-		return INVALID_KEY
-	}
+	// if err := ds.validKey(k); err != nil {
+	// 	return INVALID_KEY
+	// }
 
-	if err := ds.validValue(v); err != nil {
-		return err
-	}
+	// if err := ds.validValue(v); err != nil {
+	// 	return err
+	// }
 
-	if err := (*couchbase.Bucket)(ds).Append(k, v); err != nil {
-		response := err.(*gomemcached.MCResponse)
-		log.Println(response)
-		switch (*response).Status {
-		case gomemcached.NOT_STORED:
-			return NOT_FOUND_ERROR
-		case gomemcached.E2BIG:
-			return OVERSIZED_BODY
-		default:
-			return err
-		}
-	}
+	// if err := (*couchbase.Bucket)(ds).Append(k, v); err != nil {
+	// 	response := err.(*gomemcached.MCResponse)
+	// 	log.Println(response)
+	// 	switch (*response).Status {
+	// 	case gomemcached.NOT_STORED:
+	// 		return NOT_FOUND_ERROR
+	// 	case gomemcached.E2BIG:
+	// 		return OVERSIZED_BODY
+	// 	default:
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 
