@@ -14,9 +14,10 @@ type datastorer interface {
 }
 
 var (
-	NOT_FOUND_ERROR = errors.New("NOT_FOUND")
-	OVERSIZED_BODY  = errors.New("OVERSIZED_BODY")
-	EMPTY_BODY      = errors.New("EMPTY_BODY")
-	INVALID_KEY     = errors.New("INVALID_KEY")
-	INVALID_BODY    = errors.New("INVALID_BODY")
+	NOT_FOUND_ERROR  = errors.New("NOT_FOUND")
+	KEY_EXISTS_ERROR = errors.New("KEY_EXISTS_ERROR")
+	OVERSIZED_BODY   = errors.New("OVERSIZED_BODY")
+	EMPTY_BODY       = errors.New("EMPTY_BODY")
+	INVALID_KEY      = errors.New("INVALID_KEY")
+	INVALID_BODY     = errors.New("INVALID_BODY")
 )

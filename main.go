@@ -144,10 +144,14 @@ func errorToStatus(err error, w http.ResponseWriter) {
 	switch err {
 	case NOT_FOUND_ERROR:
 		http.Error(w, "key not found", http.StatusNotFound)
-	case OVERSIZED_BODY, EMPTY_BODY:
-		http.Error(w, "invalid value", http.StatusBadRequest)
+	case EMPTY_BODY:
+		http.Error(w, "empty value", http.StatusBadRequest)
+	case OVERSIZED_BODY:
+		http.Error(w, "oversized value", http.StatusBadRequest)
 	case INVALID_KEY:
 		http.Error(w, "invalid key", http.StatusBadRequest)
+	case KEY_EXISTS_ERROR:
+		http.Error(w, "key exists", http.StatusBadRequest)
 	default:
 		http.Error(w, "cache server error", http.StatusInternalServerError)
 	}

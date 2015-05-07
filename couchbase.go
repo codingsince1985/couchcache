@@ -40,7 +40,7 @@ func parseFlag() (string, string, string) {
 }
 
 func (ds *couchbaseDatastore) get(k string) []byte {
-	val := make([]uint8, 1)
+	var val []uint8
 	if _, err := (*gocb.Bucket)(ds).Get(k, &val); err != nil {
 		log.Println(err)
 		return nil
@@ -65,27 +65,35 @@ func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 	}
 
 	if _, err := (*gocb.Bucket)(ds).Insert(k, v, uint32(ttl)); err != nil {
-		log.Println(err)
-		return err
+		switch err.Error() {
+		case "Key already exists.":
+			return KEY_EXISTS_ERROR
+		case "Document value was too large.":
+			return OVERSIZED_BODY
+		default:
+			log.Println(err)
+			return err
+		}
 	}
 	return nil
 }
 
 func (ds *couchbaseDatastore) delete(k string) error {
-	// if err := ds.validKey(k); err != nil {
-	// 	return INVALID_KEY
-	// }
+	if err := ds.validKey(k); err != nil {
+		return INVALID_KEY
+	}
 
-	// if err := (*couchbase.Bucket)(ds).Delete(k); err != nil {
-	// 	response := err.(*gomemcached.MCResponse)
-	// 	log.Println(response)
-	// 	switch (*response).Status {
-	// 	case gomemcached.KEY_ENOENT:
-	// 		return NOT_FOUND_ERROR
-	// 	default:
-	// 		return err
-	// 	}
-	// }
+	if _, err := (*gocb.Bucket)(ds).Remove(k, uint64(0)); err != nil {
+		switch err.Error() {
+		case "Key already exists.":
+			return KEY_EXISTS_ERROR
+		case "Key not found.":
+			return NOT_FOUND_ERROR
+		default:
+			log.Println(err)
+			return err
+		}
+	}
 	return nil
 }
 
