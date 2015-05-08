@@ -3,8 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/couchbase/go-couchbase"
-	"github.com/couchbase/gomemcached"
+	"github.com/couchbaselabs/gocb"
 	"log"
 )
 
@@ -14,16 +13,14 @@ const (
 	MAX_KEY_LENGTH   = 250
 )
 
-type couchbaseDatastore couchbase.Bucket
+type couchbaseDatastore gocb.Bucket
 
 func newDatastore() (ds *couchbaseDatastore, err error) {
 	url, bucket, pass := parseFlag()
 
-	if c, err := couchbase.ConnectWithAuthCreds(url, bucket, pass); err == nil {
-		if p, err := c.GetPool("default"); err == nil {
-			if b, err := p.GetBucketWithAuth(bucket, bucket, pass); err == nil {
-				return (*couchbaseDatastore)(b), nil
-			}
+	if c, err := gocb.Connect(url); err == nil {
+		if b, err := c.OpenBucket(bucket, pass); err == nil {
+			return (*couchbaseDatastore)(b), nil
 		}
 	}
 	return nil, err
@@ -43,12 +40,14 @@ func parseFlag() (string, string, string) {
 }
 
 func (ds *couchbaseDatastore) get(k string) []byte {
-	if v, err := (*couchbase.Bucket)(ds).GetRaw(k); err == nil {
-		return []byte(v)
-	} else {
-		response := err.(*gomemcached.MCResponse)
-		log.Println(response)
+	var val []uint8
+	if _, err := (*gocb.Bucket)(ds).Get(k, &val); err != nil {
+		if err.Error() != "Key not found." {
+			log.Println(err)
+		}
 		return nil
+	} else {
+		return []byte(val)
 	}
 }
 
@@ -67,13 +66,12 @@ func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 		ttl = 0
 	}
 
-	if err := (*couchbase.Bucket)(ds).SetRaw(k, ttl, v); err != nil {
-		response := err.(*gomemcached.MCResponse)
-		log.Println(response)
-		switch (*response).Status {
-		case gomemcached.E2BIG:
+	if _, err := (*gocb.Bucket)(ds).Upsert(k, v, uint32(ttl)); err != nil {
+		switch err.Error() {
+		case "Document value was too large.":
 			return OVERSIZED_BODY
 		default:
+			log.Println(err)
 			return err
 		}
 	}
@@ -85,13 +83,12 @@ func (ds *couchbaseDatastore) delete(k string) error {
 		return INVALID_KEY
 	}
 
-	if err := (*couchbase.Bucket)(ds).Delete(k); err != nil {
-		response := err.(*gomemcached.MCResponse)
-		log.Println(response)
-		switch (*response).Status {
-		case gomemcached.KEY_ENOENT:
+	if _, err := (*gocb.Bucket)(ds).Remove(k, uint64(0)); err != nil {
+		switch err.Error() {
+		case "Key not found.":
 			return NOT_FOUND_ERROR
 		default:
+			log.Println(err)
 			return err
 		}
 	}
@@ -107,15 +104,14 @@ func (ds *couchbaseDatastore) append(k string, v []byte) error {
 		return err
 	}
 
-	if err := (*couchbase.Bucket)(ds).Append(k, v); err != nil {
-		response := err.(*gomemcached.MCResponse)
-		log.Println(response)
-		switch (*response).Status {
-		case gomemcached.NOT_STORED:
+	if _, err := (*gocb.Bucket)(ds).Append(k, string(v)); err != nil {
+		switch err.Error() {
+		case "The document could not be stored.":
 			return NOT_FOUND_ERROR
-		case gomemcached.E2BIG:
+		case "Document value was too large.":
 			return OVERSIZED_BODY
 		default:
+			log.Println(err)
 			return err
 		}
 	}
