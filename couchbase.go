@@ -42,7 +42,9 @@ func parseFlag() (string, string, string) {
 func (ds *couchbaseDatastore) get(k string) []byte {
 	var val []uint8
 	if _, err := (*gocb.Bucket)(ds).Get(k, &val); err != nil {
-		log.Println(err)
+		if err.Error() != "Key not found." {
+			log.Println(err)
+		}
 		return nil
 	} else {
 		return []byte(val)
@@ -64,10 +66,8 @@ func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 		ttl = 0
 	}
 
-	if _, err := (*gocb.Bucket)(ds).Insert(k, v, uint32(ttl)); err != nil {
+	if _, err := (*gocb.Bucket)(ds).Upsert(k, v, uint32(ttl)); err != nil {
 		switch err.Error() {
-		case "Key already exists.":
-			return KEY_EXISTS_ERROR
 		case "Document value was too large.":
 			return OVERSIZED_BODY
 		default:
@@ -85,8 +85,6 @@ func (ds *couchbaseDatastore) delete(k string) error {
 
 	if _, err := (*gocb.Bucket)(ds).Remove(k, uint64(0)); err != nil {
 		switch err.Error() {
-		case "Key already exists.":
-			return KEY_EXISTS_ERROR
 		case "Key not found.":
 			return NOT_FOUND_ERROR
 		default:
@@ -98,26 +96,25 @@ func (ds *couchbaseDatastore) delete(k string) error {
 }
 
 func (ds *couchbaseDatastore) append(k string, v []byte) error {
-	// if err := ds.validKey(k); err != nil {
-	// 	return INVALID_KEY
-	// }
+	if err := ds.validKey(k); err != nil {
+		return INVALID_KEY
+	}
 
-	// if err := ds.validValue(v); err != nil {
-	// 	return err
-	// }
+	if err := ds.validValue(v); err != nil {
+		return err
+	}
 
-	// if err := (*couchbase.Bucket)(ds).Append(k, v); err != nil {
-	// 	response := err.(*gomemcached.MCResponse)
-	// 	log.Println(response)
-	// 	switch (*response).Status {
-	// 	case gomemcached.NOT_STORED:
-	// 		return NOT_FOUND_ERROR
-	// 	case gomemcached.E2BIG:
-	// 		return OVERSIZED_BODY
-	// 	default:
-	// 		return err
-	// 	}
-	// }
+	if _, err := (*gocb.Bucket)(ds).Append(k, string(v)); err != nil {
+		switch err.Error() {
+		case "The document could not be stored.":
+			return NOT_FOUND_ERROR
+		case "Document value was too large.":
+			return OVERSIZED_BODY
+		default:
+			log.Println(err)
+			return err
+		}
+	}
 	return nil
 }
 
