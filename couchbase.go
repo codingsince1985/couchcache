@@ -66,16 +66,9 @@ func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 		ttl = 0
 	}
 
-	if _, err := (*gocb.Bucket)(ds).Upsert(k, v, uint32(ttl)); err != nil {
-		switch err.Error() {
-		case "Document value was too large.":
-			return OVERSIZED_BODY
-		default:
-			log.Println(err)
-			return err
-		}
-	}
-	return nil
+	_, err := (*gocb.Bucket)(ds).Upsert(k, v, uint32(ttl))
+	return memdErrorToDatastoreError(err)
+
 }
 
 func (ds *couchbaseDatastore) delete(k string) error {
@@ -83,16 +76,8 @@ func (ds *couchbaseDatastore) delete(k string) error {
 		return INVALID_KEY
 	}
 
-	if _, err := (*gocb.Bucket)(ds).Remove(k, uint64(0)); err != nil {
-		switch err.Error() {
-		case "Key not found.":
-			return NOT_FOUND_ERROR
-		default:
-			log.Println(err)
-			return err
-		}
-	}
-	return nil
+	_, err := (*gocb.Bucket)(ds).Remove(k, uint64(0))
+	return memdErrorToDatastoreError(err)
 }
 
 func (ds *couchbaseDatastore) append(k string, v []byte) error {
@@ -104,18 +89,9 @@ func (ds *couchbaseDatastore) append(k string, v []byte) error {
 		return err
 	}
 
-	if _, err := (*gocb.Bucket)(ds).Append(k, string(v)); err != nil {
-		switch err.Error() {
-		case "The document could not be stored.":
-			return NOT_FOUND_ERROR
-		case "Document value was too large.":
-			return OVERSIZED_BODY
-		default:
-			log.Println(err)
-			return err
-		}
-	}
-	return nil
+	_, err := (*gocb.Bucket)(ds).Append(k, string(v))
+	return memdErrorToDatastoreError(err)
+
 }
 
 func (ds *couchbaseDatastore) validKey(key string) error {
@@ -137,4 +113,22 @@ func (ds *couchbaseDatastore) validValue(v []byte) error {
 	}
 
 	return nil
+}
+
+func memdErrorToDatastoreError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	switch err.Error() {
+	case "Key not found.":
+		return NOT_FOUND_ERROR
+	case "The document could not be stored.":
+		return NOT_FOUND_ERROR
+	case "Document value was too large.":
+		return OVERSIZED_BODY
+	default:
+		log.Println(err)
+		return err
+	}
 }

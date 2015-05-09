@@ -49,8 +49,8 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case v := <-ch:
-		log.Println("get ["+k+"] in", timeSpent(t0), "ms")
 		if v != nil {
+			log.Println("get ["+k+"] in", timeSpent(t0), "ms")
 			w.Write(v)
 		} else {
 			log.Println(k + ": not found")
@@ -79,11 +79,11 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case err := <-ch:
-		log.Println("set ["+k+"] in", timeSpent(t0), "ms")
 		if err == nil {
+			log.Println("set ["+k+"] in", timeSpent(t0), "ms")
 			w.WriteHeader(http.StatusCreated)
 		} else {
-			errorToStatus(err, w)
+			datastoreErrorToHttpError(err, w)
 		}
 	case <-time.After(timeoutInMilliseconds * 10):
 		returnTimeout(w, k)
@@ -101,11 +101,11 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case err := <-ch:
-		log.Println("delete ["+k+"] in", timeSpent(t0), "ms")
 		if err == nil {
+			log.Println("delete ["+k+"] in", timeSpent(t0), "ms")
 			w.WriteHeader(http.StatusOK)
 		} else {
-			errorToStatus(err, w)
+			datastoreErrorToHttpError(err, w)
 		}
 	case <-time.After(timeoutInMilliseconds):
 		returnTimeout(w, k)
@@ -123,11 +123,11 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = ds.append(k, v)
-	log.Println("append ["+k+"] in", timeSpent(t0), "ms")
 	if err == nil {
+		log.Println("append ["+k+"] in", timeSpent(t0), "ms")
 		w.WriteHeader(http.StatusOK)
 	} else {
-		errorToStatus(err, w)
+		datastoreErrorToHttpError(err, w)
 	}
 }
 
@@ -140,7 +140,7 @@ func timeSpent(t0 int64) int64 {
 	return int64(math.Floor(float64(time.Now().UnixNano()-t0)/1000000 + .5))
 }
 
-func errorToStatus(err error, w http.ResponseWriter) {
+func datastoreErrorToHttpError(err error, w http.ResponseWriter) {
 	switch err {
 	case NOT_FOUND_ERROR:
 		http.Error(w, "key not found", http.StatusNotFound)
