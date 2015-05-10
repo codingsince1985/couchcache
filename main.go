@@ -103,7 +103,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	case err := <-ch:
 		if err == nil {
 			log.Println("delete ["+k+"] in", timeSpent(t0), "ms")
-			w.WriteHeader(http.StatusOK)
+			w.WriteHeader(http.StatusNoContent)
 		} else {
 			datastoreErrorToHttpError(err, w)
 		}

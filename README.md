@@ -1,7 +1,8 @@
 Couchcache
 ==
-
 A caching service developed in Go. It provides REST APIs to access key-value pairs stored in Couchbase.
+
+You may also consider [use Couchcache as mocked service](http://codingsince1985.blogspot.com.au/2015/05/use-caching-service-as-mocked.html) to replace HttpMock products when doing TDD.
 
 To start couchcache
 --
@@ -27,32 +28,32 @@ Cache service endpoint
   * send `POST` request to endpoint with data in body
   * optionally set TTL by `?ttl=TTL_IN_SEC`
 * response
-  * HTTP 201 if stored
-  * HTTP 400 if key or value is invalid
+  * `HTTP 201 Created` if stored
+  * `HTTP 400 Bad Request` if key or value is invalid
 
 ### To retrieve a key
 * request
   * send `GET` request to endpoint
 * response
-  * HTTP 200 with data in body
-  * HTTP 404 if key doesn't exist
-  * HTTP 400 if key is invalid
+  * `HTTP 200 OK` with data in body
+  * `HTTP 404 Not Found` if key doesn't exist
+  * `HTTP 400 Bad Request` if key is invalid
 
 ### To delete a key
 * request
   * send `DELETE` request to endpoint
 * response
-  * HTTP 200 if deleted
-  * HTTP 404 is key doesn't exist
-  * HTTP 400 if key is invalid
+  * `HTTP 204 No Content` if deleted
+  * `HTTP 404 Not Found` is key doesn't exist
+  * `HTTP 400 Bad Request` if key is invalid
 
 ### To append data for a key
 * request
   * send `PUT` request to endpoint with data in body
 * response
-  * HTTP 200 if appended
-  * HTTP 404 if key doesn't exist
-  * HTTP 400 if key or value is invalid
+  * `HTTP 200 OK` if appended
+  * `HTTP 404 Not Found` if key doesn't exist
+  * `HTTP 400 Bad Request` if key or value is invalid
 
 Limitation
 --
