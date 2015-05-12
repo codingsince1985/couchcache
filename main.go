@@ -12,7 +12,7 @@ import (
 
 var ds datastorer
 
-var timeoutInMilliseconds = time.Millisecond * 100
+var timeout = time.Millisecond * 100
 
 func main() {
 	if d, err := newDatastore(); err != nil {
@@ -56,7 +56,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println(k + ": not found")
 			http.Error(w, k+": not found", http.StatusNotFound)
 		}
-	case <-time.After(timeoutInMilliseconds):
+	case <-time.After(timeout):
 		returnTimeout(w, k)
 	}
 }
@@ -85,7 +85,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			datastoreErrorToHTTPError(err, w)
 		}
-	case <-time.After(timeoutInMilliseconds * 10):
+	case <-time.After(timeout * 10):
 		returnTimeout(w, k)
 	}
 }
@@ -107,7 +107,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			datastoreErrorToHTTPError(err, w)
 		}
-	case <-time.After(timeoutInMilliseconds):
+	case <-time.After(timeout):
 		returnTimeout(w, k)
 	}
 }

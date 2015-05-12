@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	maxTtlInSec   = 60 * 60 * 24 * 30
+	maxTTLInSec   = 60 * 60 * 24 * 30
 	maxSizeInByte = 20 * 1024 * 1024
 	maxKeyLength  = 250
 )
@@ -59,8 +59,8 @@ func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 		return err
 	}
 
-	if ttl > maxTtlInSec {
-		ttl = maxTtlInSec
+	if ttl > maxTTLInSec {
+		ttl = maxTTLInSec
 	} else if ttl < 0 {
 		ttl = 0
 	}
