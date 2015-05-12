@@ -83,7 +83,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println("set ["+k+"] in", timeSpent(t0), "ms")
 			w.WriteHeader(http.StatusCreated)
 		} else {
-			datastoreErrorToHttpError(err, w)
+			datastoreErrorToHTTPError(err, w)
 		}
 	case <-time.After(timeoutInMilliseconds * 10):
 		returnTimeout(w, k)
@@ -105,7 +105,7 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println("delete ["+k+"] in", timeSpent(t0), "ms")
 			w.WriteHeader(http.StatusNoContent)
 		} else {
-			datastoreErrorToHttpError(err, w)
+			datastoreErrorToHTTPError(err, w)
 		}
 	case <-time.After(timeoutInMilliseconds):
 		returnTimeout(w, k)
@@ -127,7 +127,7 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("append ["+k+"] in", timeSpent(t0), "ms")
 		w.WriteHeader(http.StatusOK)
 	} else {
-		datastoreErrorToHttpError(err, w)
+		datastoreErrorToHTTPError(err, w)
 	}
 }
 
@@ -140,17 +140,17 @@ func timeSpent(t0 int64) int64 {
 	return int64(math.Floor(float64(time.Now().UnixNano()-t0)/1000000 + .5))
 }
 
-func datastoreErrorToHttpError(err error, w http.ResponseWriter) {
+func datastoreErrorToHTTPError(err error, w http.ResponseWriter) {
 	switch err {
-	case NOT_FOUND_ERROR:
+	case errNotFound:
 		http.Error(w, "key not found", http.StatusNotFound)
-	case EMPTY_BODY:
+	case errEmptyBody:
 		http.Error(w, "empty value", http.StatusBadRequest)
-	case OVERSIZED_BODY:
+	case errOversizedBody:
 		http.Error(w, "oversized value", http.StatusBadRequest)
-	case INVALID_KEY:
+	case errInvalidKey:
 		http.Error(w, "invalid key", http.StatusBadRequest)
-	case KEY_EXISTS_ERROR:
+	case errKeyExists:
 		http.Error(w, "key exists", http.StatusBadRequest)
 	default:
 		http.Error(w, "cache server error", http.StatusInternalServerError)

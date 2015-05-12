@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	MAX_TTL_IN_SEC   = 60 * 60 * 24 * 30
-	MAX_SIZE_IN_BYTE = 20 * 1024 * 1024
-	MAX_KEY_LENGTH   = 250
+	maxTtlInSec   = 60 * 60 * 24 * 30
+	maxSizeInByte = 20 * 1024 * 1024
+	maxKeyLength  = 250
 )
 
 type couchbaseDatastore gocb.Bucket
@@ -46,22 +46,21 @@ func (ds *couchbaseDatastore) get(k string) []byte {
 			log.Println(err)
 		}
 		return nil
-	} else {
-		return []byte(val)
 	}
+	return []byte(val)
 }
 
 func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 	if err := ds.validKey(k); err != nil {
-		return INVALID_KEY
+		return errInvalidKey
 	}
 
 	if err := ds.validValue(v); err != nil {
 		return err
 	}
 
-	if ttl > MAX_TTL_IN_SEC {
-		ttl = MAX_TTL_IN_SEC
+	if ttl > maxTtlInSec {
+		ttl = maxTtlInSec
 	} else if ttl < 0 {
 		ttl = 0
 	}
@@ -73,7 +72,7 @@ func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
 
 func (ds *couchbaseDatastore) delete(k string) error {
 	if err := ds.validKey(k); err != nil {
-		return INVALID_KEY
+		return errInvalidKey
 	}
 
 	_, err := (*gocb.Bucket)(ds).Remove(k, uint64(0))
@@ -82,7 +81,7 @@ func (ds *couchbaseDatastore) delete(k string) error {
 
 func (ds *couchbaseDatastore) append(k string, v []byte) error {
 	if err := ds.validKey(k); err != nil {
-		return INVALID_KEY
+		return errInvalidKey
 	}
 
 	if err := ds.validValue(v); err != nil {
@@ -95,8 +94,8 @@ func (ds *couchbaseDatastore) append(k string, v []byte) error {
 }
 
 func (ds *couchbaseDatastore) validKey(key string) error {
-	if len(key) < 1 || len(key) > MAX_KEY_LENGTH {
-		return INVALID_KEY
+	if len(key) < 1 || len(key) > maxKeyLength {
+		return errInvalidKey
 	}
 	return nil
 }
@@ -104,12 +103,12 @@ func (ds *couchbaseDatastore) validKey(key string) error {
 func (ds *couchbaseDatastore) validValue(v []byte) error {
 	if len(v) == 0 {
 		log.Println("body is empty")
-		return EMPTY_BODY
+		return errEmptyBody
 	}
 
-	if len(v) > MAX_SIZE_IN_BYTE {
+	if len(v) > maxSizeInByte {
 		log.Println("body is too large")
-		return OVERSIZED_BODY
+		return errOversizedBody
 	}
 
 	return nil
@@ -122,11 +121,11 @@ func memdErrorToDatastoreError(err error) error {
 
 	switch err.Error() {
 	case "Key not found.":
-		return NOT_FOUND_ERROR
+		return errNotFound
 	case "The document could not be stored.":
-		return NOT_FOUND_ERROR
+		return errNotFound
 	case "Document value was too large.":
-		return OVERSIZED_BODY
+		return errOversizedBody
 	default:
 		log.Println(err)
 		return err
