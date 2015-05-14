@@ -10,6 +10,8 @@ Run couchcache with Couchbase server (host and port) and bucket (name and passwo
 
 `./couchcache --host=HOST --port=PORT --bucket=BUCKET --pass=PASS`
 
+Example, `./couchcache --host=10.99.107.192 --port=8091 --bucket=cachebucket --pass=c@che1t`
+
 default values
 ```
 host: localhost
@@ -17,11 +19,12 @@ port: 8091
 bucket: couchcache
 pass: password
 ```
-For example, `./couchcache --host=10.99.107.192 --port=8091 --bucket=cachebucket --pass=c@che1t`
-
 Cache service endpoint
 --
 `http://HOST:8080/key/KEY`
+
+Example, `http://10.99.107.190:8080/key/customer_555`
+or `http://10.99.107.190:8080/key/the_service_i_want_to_mock-endpoint_a` if you're mocking other service's endpoint
 
 ### To store a key-value pair
 * request
