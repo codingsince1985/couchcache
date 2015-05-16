@@ -51,14 +51,6 @@ func (ds *couchbaseDatastore) get(k string) []byte {
 }
 
 func (ds *couchbaseDatastore) set(k string, v []byte, ttl int) error {
-	if err := ds.validKey(k); err != nil {
-		return errInvalidKey
-	}
-
-	if err := ds.validValue(v); err != nil {
-		return err
-	}
-
 	if ttl > maxTTLInSec {
 		ttl = maxTTLInSec
 	} else if ttl < 0 {
@@ -119,6 +111,7 @@ func memdErrorToDatastoreError(err error) error {
 		return nil
 	}
 
+	log.Println(err.Error())
 	switch err.Error() {
 	case "Key not found.":
 		return errNotFound

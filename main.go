@@ -66,27 +66,22 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	k := mux.Vars(r)["key"]
 	ttl, _ := strconv.Atoi(r.FormValue("ttl"))
 
-	v, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	if v, err := ioutil.ReadAll(r.Body); err != nil {
 		http.Error(w, k+": can't get value", http.StatusBadRequest)
 		return
-	}
+	} else {
+		if err = ds.validKey(k); err == nil {
+			if err = ds.validValue(v); err == nil {
+				go func() {
+					ds.set(k, v, ttl)
+				}()
 
-	ch := make(chan error)
-	go func() {
-		ch <- ds.set(k, v, ttl)
-	}()
-
-	select {
-	case err := <-ch:
-		if err == nil {
-			log.Println("set ["+k+"] in", timeSpent(t0), "ms")
-			w.WriteHeader(http.StatusCreated)
-		} else {
-			datastoreErrorToHTTPError(err, w)
+				log.Println("set ["+k+"] in", timeSpent(t0), "ms")
+				w.WriteHeader(http.StatusCreated)
+				return
+			}
 		}
-	case <-time.After(timeout * 10):
-		returnTimeout(w, k)
+		datastoreErrorToHTTPError(err, w)
 	}
 }
 
@@ -94,21 +89,11 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	t0 := time.Now().UnixNano()
 	k := mux.Vars(r)["key"]
 
-	ch := make(chan error)
-	go func() {
-		ch <- ds.delete(k)
-	}()
-
-	select {
-	case err := <-ch:
-		if err == nil {
-			log.Println("delete ["+k+"] in", timeSpent(t0), "ms")
-			w.WriteHeader(http.StatusNoContent)
-		} else {
-			datastoreErrorToHTTPError(err, w)
-		}
-	case <-time.After(timeout):
-		returnTimeout(w, k)
+	if err := ds.delete(k); err == nil {
+		log.Println("delete ["+k+"] in", timeSpent(t0), "ms")
+		w.WriteHeader(http.StatusNoContent)
+	} else {
+		datastoreErrorToHTTPError(err, w)
 	}
 }
 
@@ -116,18 +101,16 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 	t0 := time.Now().UnixNano()
 	k := mux.Vars(r)["key"]
 
-	v, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	if v, err := ioutil.ReadAll(r.Body); err != nil {
 		http.Error(w, k+": can't get value", http.StatusBadRequest)
 		return
-	}
-
-	err = ds.append(k, v)
-	if err == nil {
-		log.Println("append ["+k+"] in", timeSpent(t0), "ms")
-		w.WriteHeader(http.StatusOK)
 	} else {
-		datastoreErrorToHTTPError(err, w)
+		if err = ds.append(k, v); err == nil {
+			log.Println("append ["+k+"] in", timeSpent(t0), "ms")
+			w.WriteHeader(http.StatusOK)
+		} else {
+			datastoreErrorToHTTPError(err, w)
+		}
 	}
 }
 
