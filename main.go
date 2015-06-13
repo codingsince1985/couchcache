@@ -42,7 +42,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ch := make(chan []byte)
+	ch := make(chan []byte, 1)
 	go func() {
 		ch <- ds.get(k)
 	}()
