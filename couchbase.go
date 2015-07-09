@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/couchbaselabs/gocb"
+	"gopkg.in/couchbaselabs/gocb.v0"
 	"log"
 )
 
