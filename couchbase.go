@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"gopkg.in/couchbaselabs/gocb.v0"
+	"gopkg.in/couchbase/gocb.v1"
 	"log"
 )
 
@@ -67,7 +67,7 @@ func (ds *couchbaseDatastore) delete(k string) error {
 		return errInvalidKey
 	}
 
-	_, err := (*gocb.Bucket)(ds).Remove(k, uint64(0))
+	_, err := (*gocb.Bucket)(ds).Remove(k, gocb.Cas(0))
 	return memdErrorToDatastoreError(err)
 }
 
