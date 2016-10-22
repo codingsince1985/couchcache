@@ -2,7 +2,7 @@ Couchcache
 ==
 A caching service developed in Go. It provides REST APIs to access key-value pairs stored in Couchbase.
 
-You may also consider [use Couchcache as mocked service](http://codingsince1985.blogspot.com.au/2015/05/use-caching-service-as-mocked.html) to replace HttpMock products when doing TDD.
+You may also consider [using couchcache as a mocked service](http://codingsince1985.blogspot.com.au/2015/05/use-caching-service-as-mocked.html) when doing TDD.
 
 To start couchcache
 --
@@ -23,6 +23,7 @@ Cache service endpoint
 `http://HOST:8080/key/KEY`
 #### Examples
 `http://10.99.107.190:8080/key/customer_555`
+
 `http://10.99.107.190:8080/key/the_service_i_want_to_mock-endpoint_a`, if you're mocking other service's endpoint
 
 ### To store a key-value pair
