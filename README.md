@@ -1,5 +1,7 @@
 Couchcache
 ==
+[![Go Report Card](https://goreportcard.com/badge/codingsince1985/couchcache)](https://goreportcard.com/report/codingsince1985/couchcache)
+
 A caching service developed in Go. It provides REST APIs to access key-value pairs stored in Couchbase.
 
 You may also consider [using couchcache as a mocked service](http://codingsince1985.blogspot.com.au/2015/05/use-caching-service-as-mocked.html) when doing TDD.
