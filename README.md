@@ -1,5 +1,6 @@
 Couchcache
 ==
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/codingsince1985/couchcache)](https://pkg.go.dev/github.com/codingsince1985/couchcache)
 [![Go Report Card](https://goreportcard.com/badge/codingsince1985/couchcache)](https://goreportcard.com/report/codingsince1985/couchcache)
 
 A caching service developed in Go. It provides REST APIs to access key-value pairs stored in Couchbase.
