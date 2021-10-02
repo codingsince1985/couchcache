@@ -66,7 +66,7 @@ Limitations
 * Max key length is 250 bytes
 * Max value size is 20 MB
 
-See [Couchbase Limits](http://docs.couchbase.com/admin/admin/Misc/limits.html).
+See [Couchbase Limits](https://docs.couchbase.com/server/current/learn/clusters-and-availability/size-limitations.html).
 
 License
 ==
